@@ -54,7 +54,11 @@ SOCKET lzhl_socket( int af, int type, int protocol )
 
 SOCKET lzhl_accept( SOCKET s, struct sockaddr* addr, int* addrlen )
 {
+#if _WIN32
 	SOCKET sock = accept( s, addr, addrlen );
+#else
+	SOCKET sock = accept( s, addr, (socklen_t*)addrlen );
+#endif
 	if( sock >= 0 )
 		globalMap.insert( GlobalMapType::value_type( sock, LZHL_SOCKET() ) );
 	return sock;
@@ -212,7 +216,11 @@ int lzhl_recv( SOCKET sock, char* buf, int bufSz, int flags )
 			ls.dSz = dataSz;
 			ls.dDisp = 0;
 			ls.dBuf = new BYTE[ dataSz ];
+#if _WIN32
 			int Ok = LZHLDecompress( dh, ls.dBuf, &dataSz, compBuf, &compSz );
+#else
+            int Ok = LZHLDecompress( dh, ls.dBuf, (size_t*)(&dataSz), compBuf, (size_t*)(&compSz) );
+#endif
 			delete [] compBuf;
 			if( !Ok )
 			{
@@ -252,5 +260,10 @@ int lzhl_closesocket( SOCKET sock )
 
 		delete [] (*iter).second.dBuf;
 	}
+
+#if _WIN32
 	return closesocket( sock );
+#else
+    return 0;
+#endif
 }

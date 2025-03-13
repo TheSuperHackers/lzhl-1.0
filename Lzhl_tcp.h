@@ -9,6 +9,17 @@
  *
  */
 
+#if !defined(_WIN32)
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+
+#ifndef SOCKET
+#define SOCKET int
+#endif
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
