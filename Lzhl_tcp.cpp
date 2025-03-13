@@ -58,7 +58,11 @@ SOCKET lzhl_accept( SOCKET s, struct sockaddr* addr, int* addrlen )
 #if _WIN32
 	SOCKET sock = accept( s, addr, addrlen );
 #else
-	SOCKET sock = accept( s, addr, (socklen_t*)addrlen );
+    assert( *addrlen >= 0 );
+    socklen_t addrlen64 = (socklen_t)*addrlen;
+	SOCKET sock = accept( s, addr, &addrlen64 );
+    assert( addrlen64 <= INT_MAX );
+    *addrlen = (int)addrlen64;
 #endif
 
 	if( sock >= 0 )
@@ -159,6 +163,7 @@ int lzhl_send( SOCKET sock, const char* data, int dataSz, int flags )
 
 int lzhl_recv( SOCKET sock, char* buf, int bufSz, int flags )
 {
+    // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
 	GlobalMapType::iterator iter = globalMap.find( sock );
 	if( iter != globalMap.end() )
 	{
@@ -219,11 +224,16 @@ int lzhl_recv( SOCKET sock, char* buf, int bufSz, int flags )
 			ls.dDisp = 0;
 			ls.dBuf = new BYTE[ dataSz ];
 
-            // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
 #if _WIN32
 			int Ok = LZHLDecompress( dh, ls.dBuf, &dataSz, compBuf, &compSz );
 #else
-            int Ok = LZHLDecompress( dh, ls.dBuf, (size_t*)(&dataSz), compBuf, (size_t*)(&compSz) );
+            size_t dataSzLongUint = (size_t)dataSz;
+            size_t compSzLongUint = (size_t)compSz;
+            int Ok = LZHLDecompress( dh, ls.dBuf, &dataSzLongUint, compBuf, &compSzLongUint );
+            assert( dataSzLongUint <= UINT_MAX );
+            assert( compSzLongUint <= UINT_MAX );
+            dataSz = (unsigned int)dataSzLongUint;
+            compSz = (unsigned int)compSzLongUint;
 #endif
 
 			delete [] compBuf;
@@ -252,6 +262,7 @@ int lzhl_recv( SOCKET sock, char* buf, int bufSz, int flags )
 
 int lzhl_closesocket( SOCKET sock )
 {
+    // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
 	GlobalMapType::iterator iter = globalMap.find( sock );
 	if( iter != globalMap.end() )
 	{
@@ -266,7 +277,6 @@ int lzhl_closesocket( SOCKET sock )
 		delete [] (*iter).second.dBuf;
 	}
 
-    // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
 #if _WIN32
 	return closesocket( sock );
 #else

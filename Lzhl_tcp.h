@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifndef SOCKET
 #define SOCKET int
