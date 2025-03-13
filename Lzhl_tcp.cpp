@@ -17,7 +17,7 @@
 #include <map>
 using namespace std;
 #include "lzhl.h"
-#include "lzhl_tcp.h"
+#include "Lzhl_tcp.h"
 
 typedef unsigned char BYTE;
 
