@@ -163,7 +163,6 @@ int lzhl_send( SOCKET sock, const char* data, int dataSz, int flags )
 
 int lzhl_recv( SOCKET sock, char* buf, int bufSz, int flags )
 {
-    // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
 	GlobalMapType::iterator iter = globalMap.find( sock );
 	if( iter != globalMap.end() )
 	{
@@ -224,16 +223,13 @@ int lzhl_recv( SOCKET sock, char* buf, int bufSz, int flags )
 			ls.dDisp = 0;
 			ls.dBuf = new BYTE[ dataSz ];
 
+    		// TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
 #if _WIN32
 			int Ok = LZHLDecompress( dh, ls.dBuf, &dataSz, compBuf, &compSz );
 #else
             size_t dataSzLongUint = (size_t)dataSz;
             size_t compSzLongUint = (size_t)compSz;
             int Ok = LZHLDecompress( dh, ls.dBuf, &dataSzLongUint, compBuf, &compSzLongUint );
-            assert( dataSzLongUint <= UINT_MAX );
-            assert( compSzLongUint <= UINT_MAX );
-            dataSz = (unsigned int)dataSzLongUint;
-            compSz = (unsigned int)compSzLongUint;
 #endif
 
 			delete [] compBuf;
@@ -262,7 +258,6 @@ int lzhl_recv( SOCKET sock, char* buf, int bufSz, int flags )
 
 int lzhl_closesocket( SOCKET sock )
 {
-    // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
 	GlobalMapType::iterator iter = globalMap.find( sock );
 	if( iter != globalMap.end() )
 	{
@@ -277,6 +272,7 @@ int lzhl_closesocket( SOCKET sock )
 		delete [] (*iter).second.dBuf;
 	}
 
+    // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
 #if _WIN32
 	return closesocket( sock );
 #else
