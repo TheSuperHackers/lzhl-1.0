@@ -54,7 +54,17 @@ SOCKET lzhl_socket( int af, int type, int protocol )
 
 SOCKET lzhl_accept( SOCKET s, struct sockaddr* addr, int* addrlen )
 {
+    // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
+#if _WIN32
 	SOCKET sock = accept( s, addr, addrlen );
+#else
+    assert( *addrlen >= 0 );
+    socklen_t addrlen64 = (socklen_t)*addrlen;
+	SOCKET sock = accept( s, addr, &addrlen64 );
+    assert( addrlen64 <= INT_MAX );
+    *addrlen = (int)addrlen64;
+#endif
+
 	if( sock >= 0 )
 		globalMap.insert( GlobalMapType::value_type( sock, LZHL_SOCKET() ) );
 	return sock;
@@ -212,7 +222,16 @@ int lzhl_recv( SOCKET sock, char* buf, int bufSz, int flags )
 			ls.dSz = dataSz;
 			ls.dDisp = 0;
 			ls.dBuf = new BYTE[ dataSz ];
+
+    		// TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
+#if _WIN32
 			int Ok = LZHLDecompress( dh, ls.dBuf, &dataSz, compBuf, &compSz );
+#else
+            size_t dataSzLongUint = (size_t)dataSz;
+            size_t compSzLongUint = (size_t)compSz;
+            int Ok = LZHLDecompress( dh, ls.dBuf, &dataSzLongUint, compBuf, &compSzLongUint );
+#endif
+
 			delete [] compBuf;
 			if( !Ok )
 			{
@@ -252,5 +271,11 @@ int lzhl_closesocket( SOCKET sock )
 
 		delete [] (*iter).second.dBuf;
 	}
+
+    // TheSuperHackers @feature vitimiti 13/03/2025 Added UNIX sockets support
+#if _WIN32
 	return closesocket( sock );
+#else
+    return close( sock );
+#endif
 }
