@@ -33,7 +33,7 @@
 #endif
 
 #ifndef INT32
-#define INT32 signed long
+#define INT32 signed int
 #endif
 
 #ifndef UINT16
@@ -41,7 +41,7 @@
 #endif
 
 #ifndef UINT32
-#define UINT32 unsigned long
+#define UINT32 unsigned int
 #endif
 
 #ifndef BOOL
